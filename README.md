@@ -1,5 +1,5 @@
 ​
-参考[用python实现自动回复QQ消息——不到60行-CSDN博客]（https://blog.csdn.net/qq_56044032/article/details/127125748）
+参考[用python实现自动回复QQ消息——不到60行-CSDN博客](https://blog.csdn.net/qq_56044032/article/details/127125748)
 
 ## 1、需要安装的模块
 我测试的python版本是3.10，模块可以安装到conda虚拟环境里避免和其它项目冲突
