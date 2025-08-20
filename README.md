@@ -102,7 +102,7 @@ faiss.write_index(index, index_file)
 
 文本块列表文件和索引文件生成在python文件同一文件夹下，如果更新了本地知识库，再次运行一遍上述代码即可。
 
-  4、主代码
+## 4、主代码
 导入需要的模块：
 ```python
 import re
