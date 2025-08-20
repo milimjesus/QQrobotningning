@@ -1,5 +1,4 @@
-# QQrobotningning
-纯Python+Ollama+langchain实现本地大模型连接qq自动回复+记忆+检索本地知识库
+​
 参考：用python实现自动回复QQ消息——不到60行-CSDN博客
 
 一直想做个qq自动回复的机械人来自娱自乐，网上有成熟方案，但不愿冒封号的危险，偶然看到这篇文章，来了灵感
@@ -41,7 +40,6 @@ Ollama安装包应使用命令安装，不然会下到C盘：
 
 ollama pull qwen:7B
 ollama pull bge-m3
-AI写代码
 等待下载完成（可能有些慢）
 
 3、 本地知识库处理
@@ -52,8 +50,6 @@ AI写代码
 import os, glob, ollama, faiss, numpy as np
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
-
-运行
 设置变量：
 
 knowlodge_store = r"D:\information"#存放资料的txt文件所在文件夹
@@ -63,8 +59,6 @@ index_file = "faiss.index"
 loader_map = {
     "*.txt":  lambda p: TextLoader(p, encoding="utf-8"),
 }#处理txt文件，可自行添加其他格式的处理工具
-
-
 读取文件（演示代码里处理的知识库是txt文件，也可以自行改成其他格式的）：
 
 all_docs = []
@@ -74,10 +68,6 @@ for pattern, LoaderCls in loader_map.items():
         for d in docs:
             d.metadata["source"] = os.path.basename(file)
         all_docs.extend(docs)
-
-
-
-
 切块并保存文本块列表文件：
 
 texts = RecursiveCharacterTextSplitter(
@@ -93,16 +83,14 @@ for t in texts:
     vec = ollama.embeddings(model=embed_model, prompt=t.page_content)["embedding"]
     vecs.append(np.array(vec, dtype=np.float32))
 vecs = np.vstack(vecs)
-
 保存faiss索引文件：
 
 index = faiss.IndexFlatIP(vecs.shape[1])
 index.add(vecs)
 faiss.write_index(index, index_file)
-
 文本块列表文件和索引文件生成在python文件同一文件夹下，如果更新了本地知识库，再次运行一遍上述代码即可。
 
-  4、主代码
+  4、主代码
 导入需要的模块：
 
 import re
@@ -118,8 +106,6 @@ from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
 import pathlib
 import os, ollama, faiss, numpy as np
-
-
 定义需要的变量：
 
 ollama的模型端口默认为http://localhost:11434
@@ -140,7 +126,6 @@ index_file = "faiss.index"  # FAISS 索引文件
 texts_file = "texts.npy"    # 文本块列表文件
 qq_message_pic = r"D:\pics.png"
 
-
 接下来是定义函数，首先是load_index_and_texts函数，作用是读取我们上面生成的本地知识库索引和文本块文件：
 
 def load_index_and_texts():
@@ -149,7 +134,6 @@ def load_index_and_texts():
     #加载文本块列表
     texts = np.load(texts_file, allow_pickle=True)
     return index, texts.tolist()
-
 然后是strip_between函数，作用是去除思考过程（如果有的话）：
 
 def strip_between(text: str, start: str, end: str) -> str:
@@ -162,7 +146,7 @@ def strip_between(text: str, start: str, end: str) -> str:
 def is_qq_running() -> bool:
     #利用psutil判断 QQ.exe 是否存在进程
     return any(p.name().lower() == "qq.exe" for p in psutil.process_iter())
- 
+
 def open_qq():
     #如未运行则启动 QQ，并等待登录完成
     if not is_qq_running():
@@ -172,8 +156,6 @@ def open_qq():
         time.sleep(15)
     else:
         print("QQ运行中")
-
-
 接着是两个用来判断是否有新消息的函数，原理是利用有新消息时qq图标变红，从而被pyautogui识别，有新消息时的图标图片请自行截图：
 
 def locate_and_click(image_path: str, confidence=0.99, timeout=10):
@@ -187,7 +169,7 @@ def locate_and_click(image_path: str, confidence=0.99, timeout=10):
             return center
         time.sleep(0.5)
     raise RuntimeError(f"未找到图片: {image_path}")
- 
+
 def find_qq():
     #找到qq并点击
     try:
@@ -195,8 +177,6 @@ def find_qq():
         return pos
     except RuntimeError:
         return None
-
-
 接着是获取并发送消息的函数，原理是qq电脑版打开时最新消息和发送框位置固定，也可以用opencv识别，我这里直接用了坐标，可自行修改：
 
 def get_latest_msg() -> str:
@@ -208,7 +188,7 @@ def get_latest_msg() -> str:
     time.sleep(0.2)
     text = pyperclip.paste()
     return text
- 
+
 def send_msg(text: str):
     #把text粘到剪切板
     pyperclip.copy(text)
@@ -219,13 +199,11 @@ def send_msg(text: str):
     pyautogui.hotkey("ctrl", "v")
     time.sleep(0.1)
     pyautogui.press("enter")
- 
+
 def close_session():
     """关闭当前聊天窗口（Ctrl+W）"""
     pyautogui.hotkey("ctrl", "w")
     time.sleep(0.5)
-
-
 接着是对接ai的函数，原理是将剪切板中复制的消息发送给ai，ai会首先在本地资源库的文本块中查找，如果匹配度达到阈值，则将文本输入预设从而回答问题，如果未达到阈值，则直接调用大模型本身知识回答。
 
 def ask(query: str, threshold: float = 0.45):
@@ -244,7 +222,7 @@ def ask(query: str, threshold: float = 0.45):
     else:
         ctx = "\n".join(texts[i].page_content for i in I[0])
         prom = f"根据以下资料回答：\n{ctx}\n\n问题"
- 
+
     prompt = ChatPromptTemplate.from_messages([
         ("system", system + prom),
         MessagesPlaceholder(variable_name="messages")
@@ -261,7 +239,6 @@ def ask(query: str, threshold: float = 0.45):
     )
     return m
 
-
 最后是运行流程的主要函数：
 
 def main():
@@ -273,37 +250,36 @@ def main():
             if not pos:
                 time.sleep(loop)
                 continue
- 
+
             #找到发消息的人
             time.sleep(0.1)
             pyautogui.moveTo(271, 115, duration=1)
             pyautogui.click()
- 
+
             #读取最新消息
             msg = get_latest_msg()
             if not msg:
                 close_session()
                 continue
- 
+
             #调用本地大模型回答
             mes = ask(msg)
             word = mes.content
- 
+
             #去掉思考过程
             word = strip_between(word, "<think>", "</think>")
             word = word.replace("\n" and "*","")
             reply = word
- 
+
             #发送回复
             send_msg(reply)
- 
+
             #最小化窗口
             pyautogui.hotkey("alt", "esc")
- 
+
         except Exception as e:
             print("等待回复中", e)
             time.sleep(loop)
-
 
 循环代码：
 
@@ -312,8 +288,5 @@ if __name__ == "__main__":
     main()
 
 运行时确保Ollama和QQ均开启，如果要调整速度，可以修改sleep的时间
-————————————————
 
-                            版权声明：本文为博主原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接和本声明。
-                        
-原文链接：https://blog.csdn.net/weixin_69344198/article/details/150535397
+​
