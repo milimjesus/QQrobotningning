@@ -52,8 +52,7 @@ AI写代码
 import os, glob, ollama, faiss, numpy as np
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
-AI写代码
-python
+
 运行
 设置变量：
 
@@ -64,9 +63,8 @@ index_file = "faiss.index"
 loader_map = {
     "*.txt":  lambda p: TextLoader(p, encoding="utf-8"),
 }#处理txt文件，可自行添加其他格式的处理工具
-AI写代码
-python
-运行
+
+
 读取文件（演示代码里处理的知识库是txt文件，也可以自行改成其他格式的）：
 
 all_docs = []
@@ -76,9 +74,10 @@ for pattern, LoaderCls in loader_map.items():
         for d in docs:
             d.metadata["source"] = os.path.basename(file)
         all_docs.extend(docs)
-AI写代码
-python
-运行
+
+
+
+
 切块并保存文本块列表文件：
 
 texts = RecursiveCharacterTextSplitter(
@@ -86,9 +85,7 @@ texts = RecursiveCharacterTextSplitter(
     chunk_overlap=100
 ).split_documents(all_docs)
 np.save("texts.npy" , texts)
-AI写代码
-python
-运行
+
 向量化从而可以使faiss读取内容并处理
 
 vecs = []
@@ -96,17 +93,13 @@ for t in texts:
     vec = ollama.embeddings(model=embed_model, prompt=t.page_content)["embedding"]
     vecs.append(np.array(vec, dtype=np.float32))
 vecs = np.vstack(vecs)
-AI写代码
-python
-运行
+
 保存faiss索引文件：
 
 index = faiss.IndexFlatIP(vecs.shape[1])
 index.add(vecs)
 faiss.write_index(index, index_file)
-AI写代码
-python
-运行
+
 文本块列表文件和索引文件生成在python文件同一文件夹下，如果更新了本地知识库，再次运行一遍上述代码即可。
 
   4、主代码
@@ -125,9 +118,7 @@ from langchain_core.messages import HumanMessage
 from langchain_ollama import ChatOllama
 import pathlib
 import os, ollama, faiss, numpy as np
-AI写代码
-python
-运行
+
 
 定义需要的变量：
 
@@ -148,9 +139,7 @@ history = FileChatMessageHistory(str(history_file))
 index_file = "faiss.index"  # FAISS 索引文件
 texts_file = "texts.npy"    # 文本块列表文件
 qq_message_pic = r"D:\pics.png"
-AI写代码
-python
-运行
+
 
 接下来是定义函数，首先是load_index_and_texts函数，作用是读取我们上面生成的本地知识库索引和文本块文件：
 
@@ -160,18 +149,14 @@ def load_index_and_texts():
     #加载文本块列表
     texts = np.load(texts_file, allow_pickle=True)
     return index, texts.tolist()
-AI写代码
-python
-运行
+
 然后是strip_between函数，作用是去除思考过程（如果有的话）：
 
 def strip_between(text: str, start: str, end: str) -> str:
     #去掉思考过程
     pattern = re.escape(start) + r".*?" + re.escape(end)
     return re.sub(pattern, "", text, flags=re.DOTALL).strip()
-AI写代码
-python
-运行
+
 接着是两个用以判断qq是否运行的函数：
 
 def is_qq_running() -> bool:
@@ -187,9 +172,7 @@ def open_qq():
         time.sleep(15)
     else:
         print("QQ运行中")
-AI写代码
-python
-运行
+
 
 接着是两个用来判断是否有新消息的函数，原理是利用有新消息时qq图标变红，从而被pyautogui识别，有新消息时的图标图片请自行截图：
 
@@ -212,9 +195,7 @@ def find_qq():
         return pos
     except RuntimeError:
         return None
-AI写代码
-python
-运行
+
 
 接着是获取并发送消息的函数，原理是qq电脑版打开时最新消息和发送框位置固定，也可以用opencv识别，我这里直接用了坐标，可自行修改：
 
@@ -243,9 +224,7 @@ def close_session():
     """关闭当前聊天窗口（Ctrl+W）"""
     pyautogui.hotkey("ctrl", "w")
     time.sleep(0.5)
-AI写代码
-python
-运行
+
 
 接着是对接ai的函数，原理是将剪切板中复制的消息发送给ai，ai会首先在本地资源库的文本块中查找，如果匹配度达到阈值，则将文本输入预设从而回答问题，如果未达到阈值，则直接调用大模型本身知识回答。
 
@@ -281,9 +260,7 @@ def ask(query: str, threshold: float = 0.45):
         config={"configurable": {"session_id": "user_001"}}
     )
     return m
-AI写代码
-python
-运行
+
 
 最后是运行流程的主要函数：
 
@@ -326,18 +303,14 @@ def main():
         except Exception as e:
             print("等待回复中", e)
             time.sleep(loop)
-AI写代码
-python
-运行
+
 
 循环代码：
 
 if __name__ == "__main__":
     time.sleep(loop)
     main()
-AI写代码
-python
-运行
+
 运行时确保Ollama和QQ均开启，如果要调整速度，可以修改sleep的时间
 ————————————————
 
