@@ -308,4 +308,5 @@ if __name__ == "__main__":
 '''
 运行时确保Ollama和QQ均开启，如果要调整速度，可以修改sleep的时间
 
+[CSDN文章链接](https://blog.csdn.net/weixin_69344198/article/details/150535397?spm=1001.2014.3001.5501)
 ​
