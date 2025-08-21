@@ -35,10 +35,10 @@ Ollama安装包应使用命令安装，不然会下到C盘：
 安装完毕后在Ollama设置中将模型存放位置改到D盘
 
 下载模型命令：
-
+```
 ollama pull qwen:7B
 ollama pull bge-m3
-
+```
 等待下载完成（可能有些慢）
 
 ## 3、 本地知识库处理
